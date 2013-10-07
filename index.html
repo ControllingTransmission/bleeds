@@ -18,6 +18,7 @@
 		<script src="js/jquery.min.js"></script>
 
 		<script src="js/three.min.js"></script>
+		<script src="js/ColladaLoader.js"></script>
 	    <script src="AudioContextMonkeyPatch.js"></script>
 		<script src="Spectrum.js"></script>
 		
@@ -31,12 +32,26 @@
 
 			var container;
 
-			var camera, scene, renderer;
+			var camera, scene, renderer, tree, skin;
 			
 			$(document).ready(function()
 			{
-				init();
-				animate();
+
+				var loader = new THREE.ColladaLoader();
+				loader.options.convertUpAxis = true;
+				loader.load( './models/ganyedes_s Maple.dae', function ( collada ) {
+
+					tree = collada.scene;
+					skin = collada.skins[ 0 ];
+
+					tree.scale.x = tree.scale.y = tree.scale.z = 0.002;
+					tree.updateMatrix();
+
+					init();
+					animate();
+
+				} );
+
 			})
 			
 			function init() 
@@ -120,61 +135,9 @@
 				var i = scene.children.length % COLORSETS.RAINBOWBRITE.length
 				//var color = COLORSETS.RAINBOWBRITE[i]
 				var color = new THREE.Color( 0x0000ff );
-				//color.setRGB( Math.floor(Math.random()*1.99),  Math.floor(Math.random()*1.99),  Math.floor(Math.random()*1.99) );
 
-/*
-				materials = [
-					new THREE.MeshBasicMaterial( { color: color, wireframe: false, transparent: true, opacity: 0.95, side: THREE.DoubleSide } )
-				];
-
-				// outer radius, inner radius, angle divisions, radial divisions
-				object = THREE.SceneUtils.createMultiMaterialObject(
-				//	new THREE.CircleGeometry( 30, 40, 0, Math.PI * 2 ), 
-					new THREE.CircleGeometry( 10, 6, 0, Math.PI * 2 ), 
-					//new THREE.CubeGeometry( 3,3,3, 1, 1, 1),
-
-					
-				materials );
-*/				
-	
-	/*
-			this._geometry = new THREE.CubeGeometry( 40, 40, 40 );
-			
-			var object = new THREE.Mesh(this._geometry, new THREE.MeshLambertMaterial( 
-				{ 
-					color: 0xffffff,
-					wireframe: false 
-				}
-			));
-*/
-			var wireframe_material = new THREE.MeshBasicMaterial( 
-				{
-					color: 0x000000, 
-					wireframe: true, 
-					wireframe_linewidth: 1 
-				} );
-			
-			var fill_material = new THREE.MeshBasicMaterial( 
-				{ 
-					color: color, 
-					wireframe: false, 
-					transparent: true, 
-					opacity: 0.95, 
-					side: THREE.DoubleSide 
-				})
-				
-				var circle = new THREE.CircleGeometry( 10, 6, 0, Math.PI * 2 )
-				var object = new THREE.Mesh(circle, fill_material);
-				
-				object.position.set( 0, 0, 0 );
-				object.rotation.z = 3.14159
-				//object.speed = 8*(Math.random() +1) //{ x:0, y:0, z:8 }
-				//var s = (Math.random() - .5)/50
-				//object.rot = s
-				object.scale.x = 1
-				object.scale.y = 1
-				scene.add( object );
-				return object
+				scene.add( tree );
+				return tree
 			}
 			
 			function onWindowResize() 
