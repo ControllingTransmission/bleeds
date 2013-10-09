@@ -3,7 +3,7 @@ Spectrum = {
 	timeStep: function() 
 	{
 		if (this._analyserNode == null) { return }
-		
+		this._analyserNode.frequencyBinCount = 8
         var freqByteData = new Uint8Array(this._analyserNode.frequencyBinCount);
         this._analyserNode.getByteFrequencyData(freqByteData); 
 		
