@@ -1,5 +1,5 @@
 $(document).bind('keydown', 'b', function(e) { 
-	tree.branch(0, 0, 0, 250, tree.radians(90))
+	tree.makeBranch()
 }); 
 
 $(document).bind('keydown', 'n', function(e) { 
@@ -22,3 +22,6 @@ $(document).bind('keydown', 'v', function(e) {
 	tree.setColor(new THREE.Color('#00ffff'))
 }); 	
 
+$(document).bind('keydown', 'o', function(e) { 
+	tree.rotation.y += .1
+}); 

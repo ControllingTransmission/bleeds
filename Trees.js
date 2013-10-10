@@ -1,4 +1,5 @@
 var THREETree = function(){
+	this.trunkTop = null
 	this.color = new THREE.Color('#ffffff')
 	this.wireframe = false
 	this.prototype = new THREE.Object3D(),
@@ -16,7 +17,8 @@ var THREETree = function(){
 			scene.remove(child)
 			this.remove(child)
 		}
-		this.branch(0, 0, 0, 250, this.radians(90));//x, z, y, height, angle
+		this.trunkTop = null
+		this.makeBranch();//x, z, y, height, angle
 	},
 	this.addObject = function(object){
 		this.add(object)
@@ -101,7 +103,15 @@ var THREETree = function(){
 		}
 		this.wireframe = wireframe
 	}
+	this.makeBranch = function(){
+		console.log(this.trunkTop)
+		if(this.trunkTop == null)
+			this.branch(0, 0, 0, 250, this.radians(90))
+		else
+			this.branch(this.trunkTop.x, this.trunkTop.y, this.trunkTop.z, 200, this.radians(90)+this.radians(this.random(-17, 17)))
+	}
 	this.branch = function(x, y, z, length, angle){//Start position of the tree base (x,y,z), length and angles
+		console.log(length)
 		//Setup new material and geometry
 		material = new THREE.MeshBasicMaterial();
 		material.color = this.color
@@ -130,6 +140,9 @@ var THREETree = function(){
 		particle.position.x = newx;
 		particle.position.y = newy;
 		particle.position.z = newz;
+
+		if(this.trunkTop == null)
+			this.trunkTop = {x:particle.position.x, y:particle.position.y, z:particle.position.z}
 		
 		//Add the new particle to the scene
 		this.add(particle);

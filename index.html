@@ -119,13 +119,13 @@
 				var max = 27
 				var max = 37
 				var spacing = max*100/27
-				var max = 2
+				var max = 1
 				var spacing = max*100
 				for (var x = 0; x < max; x++)
 				{
 					for (var y = 0; y < max; y++)
 					{
-						var obj = new THREETree().init()
+						obj = addObject()
 						obj.position.x = (x - (max-1)/2) *spacing + (y % 2)*spacing/2
 						obj.position.y = (y - (max-1)/2) *spacing 
 						obj.position.z = 0
@@ -168,8 +168,16 @@
 				return object
 			}
 
+			shape = {
+				TetrahedronGeometries: []
+			}
+			function generateTetrahedronGeometries(){
+
+			}
 			function createShape(depth)
 			{
+				if(shape.TetrahedronGeometries.length == 0)
+					generateTetrahedronGeometries(0, 1000, 5)
 				var i = scene.children.length % COLORSETS.RAINBOWBRITE.length
 				var color = new THREE.Color( 0xff00ff );
 
@@ -276,8 +284,8 @@
 					var r = Math.sqrt((x*x) + (y*y) +1)
 
 					if(bins){
-						//for(var g=0; g<gridRows.length; g++)
-							//gridRows[g].step(bins, 0)
+						for(var g=0; g<gridRows.length; g++)
+							gridRows[g].step(bins, 0)
 					}
 
 					/*if (bins)
