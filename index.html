@@ -16,11 +16,14 @@
 	<body>
 
 		<script src="js/jquery.min.js"></script>
+		<script src="js/jquery.hotkeys.js"></script>
 
 		<script src="js/three.min.js"></script>
 		<script src="js/ColladaLoader.js"></script>
 	    <script src="AudioContextMonkeyPatch.js"></script>
 		<script src="Spectrum.js"></script>
+		<script src="Trees.js"></script>
+		<script src="hotkeys.js"></script>
 		
 
 		<script>
@@ -30,6 +33,7 @@
 
 			//PI = 3.14159265359
 
+			
 			var container;
 
 			var camera, scene, renderer, tree, skin, globalTrunk;
@@ -48,8 +52,12 @@
 
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
 				camera.position.z = 2500;
+				camera.position.y = 800
 
 				scene = new THREE.Scene();
+				scene.addObject = function(object){
+					this.add(object)
+				}
 				//scene.fog = new THREE.FogExp2( 0xefd1b5, 0.0025 );
 				//scene.fog = new THREE.FogExp2( 0x000000, 0.00045 );
 
@@ -69,8 +77,17 @@
 				window.addEventListener( 'resize', onWindowResize, false );
 				setupBindings()
 				setupGrid()
+				tree = new THREETree();
+				tree.init()
+				tree.branch(0, 0, 0, 250, this.radians(90));//x, z, y, height, angle
+
 				setupBlur()
 
+			}
+
+			function radians(angle){
+				//Angle supplied in degrees, needs to be converted to radians
+				return angle * (Math.PI / 180);
 			}
 			
 			function setupBlur()
@@ -93,41 +110,28 @@
 				vblur.renderToScreen = true;
 				composer.addPass( vblur );
 			}
+
+
 			
 			function setupGrid()
 			{
 				gridRows = []
-				//var max = 27
-				// var max = 37
-				// var spacing = max*100/27
-				var max = 1
+				var max = 27
+				var max = 37
 				var spacing = max*100/27
-				// for (var x = 0; x < max; x++)
-				// {
-				// 	for (var y = 0; y < max; y++)
-				// 	{
-				// 		var obj = addObject()
-				// 		obj.position.x = (x - (max-1)/2) *spacing + (y % 2)*spacing/2
-				// 		obj.position.y = (y - (max-1)/2) *spacing 
-				// 		obj.position.z = 0
-				// 		obj.original_position = {}
-				// 		obj.original_position.x = obj.position.x
-				// 		obj.original_position.y = obj.position.y
-				// 		obj.original_position.z = obj.position.z
-				// 	} 
-				// } 
-
-				globalTrunk = addObject()
-				console.log(globalTrunk.step)
-				obj = globalTrunk
-				obj.position.x = 0
-				obj.position.y = 0
-				obj.position.z = 0
-				obj.original_position = {}
-				obj.original_position.x = obj.position.x
-				obj.original_position.y = obj.position.y
-				obj.original_position.z = obj.position.z
-				gridRows.push(obj)
+				var max = 2
+				var spacing = max*100
+				for (var x = 0; x < max; x++)
+				{
+					for (var y = 0; y < max; y++)
+					{
+						var obj = new THREETree().init()
+						obj.position.x = (x - (max-1)/2) *spacing + (y % 2)*spacing/2
+						obj.position.y = (y - (max-1)/2) *spacing 
+						obj.position.z = 0
+						gridRows.push(obj)
+					} 
+				} 
 			}
 
 			function addObject()
@@ -160,11 +164,11 @@
 				}
 			));
 */
-				object = createTetrahedron();
+				object = createShape(2);
 				return object
 			}
 
-			function createTetrahedron(depth)
+			function createShape(depth)
 			{
 				var i = scene.children.length % COLORSETS.RAINBOWBRITE.length
 				var color = new THREE.Color( 0xff00ff );
@@ -234,137 +238,14 @@
 
 				object.setOriginalState()
 
-				scene.add( object );
-				// object.position.y -= 300
-				return object
-			}
-
-			function createTree()
-			{
-				var i = scene.children.length % COLORSETS.RAINBOWBRITE.length
-				var color = new THREE.Color( 0xff00ff );
-
-				var wireframe_material = new THREE.MeshBasicMaterial( 
-				{
-					color: 0x000000, 
-					wireframe: false, 
-					wireframe_linewidth: 1 
-				} );
-			
-				var fill_material = new THREE.MeshBasicMaterial( 
-				{ 
-					color: color, 
-					wireframe: true, 
-					transparent: true, 
-					opacity: 0.95, 
-					side: THREE.DoubleSide 
-				})
-				
-				var cube = new THREE.CubeGeometry( 20, 60, 20 )
-				cube.applyMatrix(new THREE.Matrix4().makeTranslation(0,30,0))
-				var mesh = new THREE.Mesh(cube, fill_material);
-				var object = new THREE.Object3D()
-
-				object.step = function (bins, binNumber){
-					this.scale.y = this.originalState.scale.y+bins[5-binNumber]/500;
-					for(var x = 0; x<this.children.length; x++){
-						var child = this.children[x]
-						if(child.step){
-							child.step(bins, binNumber+1)
-						}
-					}
-				}
-
-				object.setOriginalState = function(){
-					this.originalState = {
-						rotation: {
-							x: this.rotation.x, 
-							y: this.rotation.y, 
-							z: this.rotation.z
-						},
-						scale: {
-							x: this.scale.x, 
-							y: this.scale.y, 
-							z: this.scale.z
-						}
-					}
-				}
-
-				object.setOriginalState()
-				object.add(mesh)
-				mesh.position.set( 0, 0, 0 );
-				object.rotation.z = 0
-
-				//object.speed = 8*(Math.random() +1) //{ x:0, y:0, z:8 }
-				//var s = (Math.random() - .5)/50
-				//object.rot = s
-				object.scale.x = 1
-				object.scale.y = 1
-
-				createTreeBranch(object, 5, 1, 3/2)
+				if(depth > 0)
+					object.add(createShape(depth-1))
 
 				scene.add( object );
 				// object.position.y -= 300
 				return object
 			}
 
-			function createTreeBranch(trunk, count, branchCount, direction)
-			{
-				if(count <= 0) return 
-
-				var i = scene.children.length % COLORSETS.RAINBOWBRITE.length
-				var color = new THREE.Color( 0xff00ff );
-
-				var wireframe_material = new THREE.MeshBasicMaterial( 
-				{
-					color: 0x000000, 
-					wireframe: false, 
-					wireframe_linewidth: 1 
-				} );
-			
-				var fill_material = new THREE.MeshBasicMaterial( 
-				{ 
-					color: color, 
-					wireframe: true, 
-					transparent: true, 
-					opacity: 0.95, 
-					side: THREE.DoubleSide 
-				})
-				
-				var cube = new THREE.CubeGeometry( 20, 60, 20 )
-				cube.applyMatrix(new THREE.Matrix4().makeTranslation(0,30,0))
-				var mesh = new THREE.Mesh(cube, fill_material);
-				var branch = new THREE.Object3D()
-				branch.step = trunk.step
-				branch.setOriginalState = trunk.setOriginalState
-
-				branch.add(mesh)
-				//object.speed = 8*(Math.random() +1) //{ x:0, y:0, z:8 }
-				//var s = (Math.random() - .5)/50
-				//object.rot = s
-				branch.scale.x = .7
-				branch.scale.y = .7
-				branch.scale.z = .7
-				branch.position.set( 0, 60, 0 );
-				branch.originalScale = {x:0, y:0, z:0}
-				branch.rotation.z = Math.random()*direction-.5
-				branch.rotation.x = Math.random()*direction-.5
-				branch.rotation.y = Math.random()*direction-.5
-				branch.setOriginalState()
-
-
-				trunk.add(branch)
-
-				if(branchCount > 1){
-					branchCount--
-					direction--
-					createTreeBranch(trunk, count, branchCount, direction)
-				}
-
-				count--
-
-				return createTreeBranch(branch, count, 3, 3/2)
-			}
 			
 			function onWindowResize() 
 			{
@@ -395,7 +276,8 @@
 					var r = Math.sqrt((x*x) + (y*y) +1)
 
 					if(bins){
-						globalTrunk.step(bins, 0)
+						//for(var g=0; g<gridRows.length; g++)
+							//gridRows[g].step(bins, 0)
 					}
 
 					/*if (bins)
