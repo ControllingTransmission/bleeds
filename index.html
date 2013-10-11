@@ -23,6 +23,7 @@
 	    <script src="AudioContextMonkeyPatch.js"></script>
 		<script src="Spectrum.js"></script>
 		<script src="Trees.js"></script>
+		<script src="Skybox.js"></script>
 		<script src="hotkeys.js"></script>
 		
 
@@ -36,13 +37,52 @@
 			
 			var container;
 
-			var camera, scene, renderer, tree, skin, globalTrunk;
+			var camera, scene, renderer, tree, skin, planets;
+			planets = []
 			
 			$(document).ready(function()
 			{
 				init();
 				animate();
 			})
+
+			var Planet = function(){
+				THREE.Object3D.apply(this, arguments);
+				this.ground = null;
+				this.trees = [];
+				this.init = function(){
+					var ground = createShape(2);
+
+					this.growTree()
+					this.ground = ground
+					this.add(ground)
+
+					scene.add(this)
+
+					var direction = planets.length%2?1:-1
+					this.position.z-=planets.length*1000
+					this.position.y+=planets.length*200
+					this.position.x+=planets.length*1000*direction
+
+					planets.push(this)
+					return this
+				};
+				this.growTree = function(){
+					var tree = new THREETree();
+					tree.init()
+					var direction = this.trees.length%2?1:-1
+					tree.branch(0, 0, 0, 250, tree.radians(90+this.trees.length*30*direction));
+					this.add(tree)
+					this.trees.push(tree)
+					return tree
+				};
+				this.close = function(){
+					scene.remove(this)
+					planets.pop()
+				}
+			}
+			Planet.prototype = Object.create(THREE.Object3D.prototype);
+			Planet.prototype.constructor = THREETree;
 			
 			function init() 
 			{
@@ -50,11 +90,14 @@
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000000 );
 				camera.position.z = 2500;
-				camera.position.y = 800
+				camera.position.y = 600
+
+				cameraCube = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
 
 				scene = new THREE.Scene();
+				sceneCube = new THREE.Scene();
 				scene.addObject = function(object){
 					this.add(object)
 				}
@@ -72,14 +115,16 @@
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.autoClear = false;
 
 				container.appendChild( renderer.domElement );
 				window.addEventListener( 'resize', onWindowResize, false );
 				setupBindings()
-				setupGrid()
-				tree = new THREETree();
-				tree.init()
-				tree.branch(0, 0, 0, 250, this.radians(90));//x, z, y, height, angle
+				// setupGrid()
+
+				initSkybox();
+
+				planet = new Planet().init();
 
 				setupBlur()
 
@@ -136,34 +181,6 @@
 
 			function addObject()
 			{
-				//var color = COLORSETS.RAINBOWBRITE[i]
-				//color.setRGB( Math.floor(Math.random()*1.99),  Math.floor(Math.random()*1.99),  Math.floor(Math.random()*1.99) );
-
-/*
-				materials = [
-					new THREE.MeshBasicMaterial( { color: color, wireframe: false, transparent: true, opacity: 0.95, side: THREE.DoubleSide } )
-				];
-
-				// outer radius, inner radius, angle divisions, radial divisions
-				object = THREE.SceneUtils.createMultiMaterialObject(
-				//	new THREE.CircleGeometry( 30, 40, 0, Math.PI * 2 ), 
-					new THREE.CircleGeometry( 10, 6, 0, Math.PI * 2 ), 
-					//new THREE.CubeGeometry( 3,3,3, 1, 1, 1),
-
-					
-				materials );
-*/				
-	
-	/*
-			this._geometry = new THREE.CubeGeometry( 40, 40, 40 );
-			
-			var object = new THREE.Mesh(this._geometry, new THREE.MeshLambertMaterial( 
-				{ 
-					color: 0xffffff,
-					wireframe: false 
-				}
-			));
-*/
 				object = createShape(2);
 				return object
 			}
@@ -171,13 +188,14 @@
 			shape = {
 				TetrahedronGeometries: []
 			}
-			function generateTetrahedronGeometries(){
-
+			function getTetrahedronGeometries(bins, binNumber){
+				// console.log(shape.TetrahedronGeometries[binNumber])
+				if(shape.TetrahedronGeometries[bins[binNumber]] == null)
+					shape.TetrahedronGeometries[bins[binNumber]] = new THREE.TetrahedronGeometry(200*bins[binNumber]/50+150, parseInt(bins[binNumber]/50))
+				return shape.TetrahedronGeometries[bins[binNumber]]
 			}
 			function createShape(depth)
 			{
-				if(shape.TetrahedronGeometries.length == 0)
-					generateTetrahedronGeometries(0, 1000, 5)
 				var i = scene.children.length % COLORSETS.RAINBOWBRITE.length
 				var color = new THREE.Color( 0xff00ff );
 
@@ -208,14 +226,11 @@
 
 						var child = this.children[x]
 						var material = child.material
-						var geometry = new THREE.TetrahedronGeometry(200*bins[binNumber]/50, parseInt(bins[binNumber]/50))
+						var geometry = getTetrahedronGeometries(bins, binNumber)
 						var mesh = new THREE.Mesh(geometry, material)
 						this.remove(child)
 						this.add(mesh)
-
-						if(child.step){
-							child.step(bins, binNumber+1)
-						}
+						this.position.y = this.originalState.position.y - 200*bins[binNumber]/50 + 75
 					}
 				}
 
@@ -230,6 +245,11 @@
 							x: this.scale.x, 
 							y: this.scale.y, 
 							z: this.scale.z
+						},
+						position: {
+							x: this.position.x, 
+							y: this.position.y, 
+							z: this.position.z
 						}
 					}
 				}
@@ -284,67 +304,16 @@
 					var r = Math.sqrt((x*x) + (y*y) +1)
 
 					if(bins){
-						for(var g=0; g<gridRows.length; g++)
-							gridRows[g].step(bins, 0)
+						for(var p=0; p<planets.length; p++){
+							planets[p].ground.step(bins, 0)
+						}
 					}
-
-					/*if (bins)
-					{
-						//var b = Math.floor(i/10)
-						var b = Math.floor((r+400)/10)
-						
-						if (b < bins.length)
-						{
-							console.log(b)
-							globalTrunk.step(b)
-							var color =  COLORSETS.RAINBOWBRITE[b % COLORSETS.RAINBOWBRITE.length]
-							//console.log("object.color = " + object.color)
-							
-							var fill_material = new THREE.MeshBasicMaterial( 
-								{ 
-									color: color, 
-									wireframe: false, 
-									transparent: true, 
-									opacity: 0.95, 
-									side: THREE.DoubleSide 
-								})
-								
-							object.material =fill_material
-							//.setColor(new THREE.Color( 0xff0000 )) // new THREE.Color( color )
-							//object.position.z = bins[i]*3
-							//object.rotation.x = bins[i]/10
-						
-/*
-							var vs = bins[b]/120
-							var s = vs*vs*vs*vs*vs
-							object.scale.x = s
-							object.scale.y = s
-							//object.rotation.x = s/r
-							//object.rotation.y = s/r
-							//object.rotation.z = Math.PI/4
-							//object.position.z = 100-s*60 
-							object.position.z += Math.sin(timer)
-*/
-							// var vs = bins[b]/100
-							// var s = vs*vs*vs*vs*vs
-							// object.scale.x = s*.5
-							// object.scale.y = s*.5
-							//object.rotation.x = Math.cos(s)
-							//object.rotation.y = Math.sin(s)
-							//object.rotation.z = s/r
-							// object.position.z = -s*30
-					// 	}
-					// }
-					
-					
-					//object.scale.x = Math.sin(timer + a)*.4 + .4
-					//object.scale.y = Math.sin(timer + a)*.4 + .4
-					
-					//object.position.z = -300 *(1 - Math.cos(timer + a) *.5 + Math.sin(timer*.2 + a))
-					
 				}
-				prepareBlur()
+				// prepareBlur()
+
+				renderer.render( sceneCube, cameraCube );
 				renderer.render( scene, camera );
+				
 			}
 
 			function setupBindings()
