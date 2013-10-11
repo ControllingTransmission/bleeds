@@ -11,6 +11,14 @@
 				margin: 0px;
 				overflow: hidden;
 			}
+			#bandname {
+				position:absolute;
+				width:100%;
+				text-align: center;
+				font-size: 200px;
+				color:#ffffff;
+				display:none;
+			}
 		</style>
 	</head>
 	<body>
@@ -63,6 +71,7 @@
 					this.position.z-=planets.length*1000
 					this.position.y+=planets.length*200
 					this.position.x+=planets.length*1000*direction
+					this.rotation.speed = {x:0,y:0,z:0}
 
 					planets.push(this)
 					return this
@@ -76,6 +85,10 @@
 					this.trees.push(tree)
 					return tree
 				};
+				this.closeTree = function(){
+					this.remove(this.trees[this.trees.length-1])
+					this.trees.pop()
+				}
 				this.close = function(){
 					scene.remove(this)
 					planets.pop()
@@ -95,6 +108,7 @@
 				camera.position.y = 600
 
 				cameraCube = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
+				cameraCube.rotation.speed = {x:0, y:0, z:0}
 
 				scene = new THREE.Scene();
 				sceneCube = new THREE.Scene();
@@ -309,6 +323,24 @@
 						}
 					}
 				}
+
+				for(var p=0; p<planets.length; p++){
+					var planet = planets[p]
+					planet.rotation.x += planet.rotation.speed.x
+					planet.rotation.y += planet.rotation.speed.y
+					planet.rotation.z += planet.rotation.speed.z
+					for(var t=0; t<planet.trees.length; t++){
+						var tree = planet.trees[t]
+						// console.log(tree.rotation.speed.y)
+						tree.rotation.x += tree.rotation.speed.x
+						tree.rotation.y += tree.rotation.speed.y
+						tree.rotation.z += tree.rotation.speed.z
+					}
+				}
+
+				cameraCube.rotation.x += cameraCube.rotation.speed.x
+				cameraCube.rotation.y += cameraCube.rotation.speed.y
+				cameraCube.rotation.z += cameraCube.rotation.speed.z
 				// prepareBlur()
 
 				renderer.render( sceneCube, cameraCube );
@@ -376,6 +408,6 @@
 			
 		</script>
 
-
+		<div id="bandname">bleeds</div>
 	</body>
 </html>

@@ -8,6 +8,8 @@ var THREETree = function(){
 	this.init = function(){
 		scene.add(this)
 		this.scale = {x:2,y:1.5,z:2}
+		this.rotation.speed = {x:0,y:0,z:0}
+
 		// this.position.y -= 800
 		return this
 	},

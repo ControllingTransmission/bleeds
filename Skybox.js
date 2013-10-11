@@ -20,6 +20,13 @@ function initSkybox(){
 
 	// build the skybox Mesh 
 	skybox = new THREE.Mesh( new THREE.CubeGeometry( 100000, 100000, 100000 ), material );
+	skybox.materials = [material, 
+		new THREE.MeshBasicMaterial({color:0x000000, depthWrite:false, side:THREE.BackSide}), 
+		new THREE.MeshBasicMaterial({color:0xff00ff, depthWrite:false, side:THREE.BackSide}),
+		new THREE.MeshBasicMaterial({color:0xffff00, depthWrite:false, side:THREE.BackSide}),
+		new THREE.MeshBasicMaterial({color:0x00ffff, depthWrite:false, side:THREE.BackSide}),
+		] 
+	skybox.materialIndex = 0
 	// add it to the scene
 	sceneCube.add( skybox );
 }
