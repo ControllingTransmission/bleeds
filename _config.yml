@@ -1,0 +1,8 @@
+# GitHub Pages configuration for static site
+title: "Bleeds - Interactive 3D Audio-Visual Experience"
+description: "An interactive 3D audio-visual experience built with Three.js"
+
+# Exclude unnecessary files
+exclude:
+  - README.md
+  - .gitignore
