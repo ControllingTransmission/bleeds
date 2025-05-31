@@ -57,4 +57,10 @@ The application consists of:
 
 ## GitHub Pages Setup
 
-This repository is configured for GitHub Pages deployment from the main branch. The static files are served directly without any build process required.
+This repository uses GitHub Actions for automated deployment to GitHub Pages. The deployment is triggered automatically on pushes to the master branch. The static files are served directly without any build process required.
+
+### Deployment Process
+
+- **Automatic**: Pushes to `master` branch trigger deployment via GitHub Actions
+- **Manual**: Can be triggered manually from the Actions tab in GitHub
+- **Workflow**: See `.github/workflows/deploy.yml` for the complete deployment configuration
